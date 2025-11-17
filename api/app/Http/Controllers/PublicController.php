@@ -12,7 +12,7 @@ class PublicController extends Controller
 {
     /**
      * Listar quadras ativas para página pública
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function courts()
@@ -27,22 +27,69 @@ class PublicController extends Controller
 
     /**
      * Listar planos ativos para página pública
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function plans()
     {
-        $planos = Plano::where('status', 'ativo')
-            ->select('id_plano', 'nome', 'preco', 'ciclo_cobranca', 'max_reservas_futuras', 'beneficios_json', 'status')
-            ->orderBy('preco')
-            ->get();
+        try {
+            // Contabiliza assinaturas por plano (ativas ou pendentes) de forma segura via withCount
+            $planos = Plano::query()
+                ->where('status', 'ativo')
+                ->withCount(['assinaturas as subscriptions_count' => function ($q) {
+                    $q->whereIn('status', ['ativa', 'pendente']);
+                }])
+                ->orderByDesc('subscriptions_count')
+                ->orderBy('preco')
+                ->get([
+                    'id_plano', 'nome', 'preco', 'ciclo_cobranca', 'max_reservas_futuras', 'beneficios_json', 'status'
+                ]);
 
-        return response()->json(['data' => $planos], 200);
+            // Sinaliza o(s) mais popular(es) com base no maior contador
+            $max = $planos->max('subscriptions_count') ?? 0;
+            $data = $planos->map(function ($plano) use ($max) {
+                return [
+                    'id_plano' => $plano->id_plano,
+                    'nome' => $plano->nome,
+                    'preco' => (float) $plano->preco,
+                    'ciclo_cobranca' => $plano->ciclo_cobranca,
+                    'max_reservas_futuras' => (int) $plano->max_reservas_futuras,
+                    'beneficios_json' => is_array($plano->beneficios_json) ? $plano->beneficios_json : json_decode($plano->beneficios_json, true),
+                    'status' => $plano->status,
+                    'subscriptions_count' => (int) ($plano->subscriptions_count ?? 0),
+                    'is_popular' => ($plano->subscriptions_count ?? 0) > 0 && (int)$plano->subscriptions_count === (int)$max,
+                ];
+            });
+
+            return response()->json(['data' => $data->values()], 200);
+        } catch (\Throwable $e) {
+            // Fallback seguro: retornar planos ativos simples (sem popularidade)
+            $planos = Plano::query()
+                ->where('status', 'ativo')
+                ->orderBy('preco')
+                ->get(['id_plano', 'nome', 'preco', 'ciclo_cobranca', 'max_reservas_futuras', 'beneficios_json', 'status']);
+
+            $data = $planos->map(function ($plano) {
+                return [
+                    'id_plano' => $plano->id_plano,
+                    'nome' => $plano->nome,
+                    'preco' => (float) $plano->preco,
+                    'ciclo_cobranca' => $plano->ciclo_cobranca,
+                    'max_reservas_futuras' => (int) $plano->max_reservas_futuras,
+                    'beneficios_json' => is_array($plano->beneficios_json) ? $plano->beneficios_json : json_decode($plano->beneficios_json, true),
+                    'status' => $plano->status,
+                    'subscriptions_count' => 0,
+                    'is_popular' => false,
+                ];
+            });
+
+            return response()->json(['data' => $data->values()], 200);
+        }
     }
 
     /**
      * Listar aulas ativas para página pública
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function classes()
@@ -58,9 +105,9 @@ class PublicController extends Controller
 
     /**
      * Listar instrutores ativos para página pública
-     * 
+     *
      * GET /api/public/instructors
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function instructors()

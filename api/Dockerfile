@@ -36,8 +36,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 # Definir diretório de trabalho
 WORKDIR /var/www/html
 
-# Copiar arquivos do composer
-COPY composer.json composer.lock ./
+# Copiar arquivos do composer (composer.json sempre existe; composer.lock pode não existir)
+# Usar wildcard evita falha quando o lock ainda não foi gerado
+COPY composer.* ./
 
 # Instalar dependências do Composer
 # Importante: evitar scripts (que tentam rodar "artisan") na fase de build

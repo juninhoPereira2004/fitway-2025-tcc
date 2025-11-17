@@ -50,7 +50,8 @@ const HomePage = () => {
       // Carregar dados em paralelo
       const [courtsData, plansData, classesData] = await Promise.all([
         courtsService.getCourts().catch(() => []),
-        plansService.listPublicPlans().catch(() => ({ data: [] })),
+        // Não engolir erros silenciosamente: deixar o catch externo tratar e exibir toast
+        plansService.listPublicPlans(),
         classesService.list({ status: 'ativa' }).catch(() => ({ data: [] }))
       ]);
 
@@ -315,11 +316,13 @@ const HomePage = () => {
             </div>
           ) : plans.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {plans.map((plan, index) => (
-                <Card key={plan.id_plano} className={`sport-card bg-card/90 backdrop-blur-sm relative ${index === 1 ? 'ring-2 ring-fitway-green shadow-glow' : 'border-fitway-green/30'}`}>
-                  {index === 1 && (
+              {[...plans]
+                .sort((a: any, b: any) => (b?.subscriptions_count ?? 0) - (a?.subscriptions_count ?? 0))
+                .map((plan: any) => (
+                <Card key={plan.id_plano} className={`sport-card bg-card/90 backdrop-blur-sm relative ${plan.is_popular ? 'ring-2 ring-fitway-green shadow-glow' : 'border-fitway-green/30'}`}>
+                  {plan.is_popular && (
                     <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-fitway-green text-fitway-dark font-bold">
-                      Mais Popular
+                      Mais Popular agora
                     </Badge>
                   )}
                   <CardHeader>
@@ -367,7 +370,7 @@ const HomePage = () => {
                         </>
                       )}
                     </ul>
-                    <Button variant={index === 1 ? "neon" : "sport"} className="w-full" size="lg" onClick={() => window.location.href = '/login'}>
+                    <Button variant={plan.is_popular ? "neon" : "sport"} className="w-full" size="lg" onClick={() => window.location.href = '/login'}>
                       <CreditCard className="mr-2 h-4 w-4" />
                       Escolher Plano
                     </Button>

@@ -92,6 +92,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           },
           { title: 'Assinaturas', href: '/admin/assinaturas', icon: CreditCard },
           { title: 'Pagamentos', href: '/admin/pagamentos', icon: DollarSign },
+          { title: 'Relatórios', href: '/admin/relatorios', icon: Receipt },
           { title: 'Notificações', href: '/admin/notificacoes', icon: Bell },
         ];
       case 'instrutor':

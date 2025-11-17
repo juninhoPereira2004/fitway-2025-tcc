@@ -260,6 +260,12 @@ const StudentPlans = () => {
                         Plano Atual
                       </Badge>
                     )}
+                    {!isCurrent && plan.is_popular && (
+                      <Badge className="absolute -top-3 right-4 bg-yellow-400 text-black font-bold flex items-center gap-1">
+                        <Crown className="h-3 w-3" />
+                        Mais popular agora
+                      </Badge>
+                    )}
 
                     <CardHeader>
                       <CardTitle className="text-white text-2xl">{plan.nome}</CardTitle>

@@ -111,6 +111,9 @@ export interface Plan {
   status: 'ativo' | 'inativo';
   criado_em: string;
   atualizado_em: string;
+  // Campos derivados (público)
+  subscriptions_count?: number; // total de assinaturas (ativa/pendente)
+  is_popular?: boolean; // se é o mais popular no momento
 }
 
 export interface PlanFormData {

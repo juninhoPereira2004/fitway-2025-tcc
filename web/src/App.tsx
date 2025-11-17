@@ -46,6 +46,7 @@ import BulkEnrollment from "./pages/admin/agendamentos/classes/BulkEnrollment";
 import AdminPayments from "./pages/admin/Payments";
 import AdminSubscriptions from "./pages/admin/payments/Subscriptions";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminReports from "./pages/admin/relatorios/Reports";
 
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="pagamentos" element={<AdminPayments />} />
             <Route path="assinaturas" element={<AdminSubscriptions />} />
             <Route path="notificacoes" element={<AdminNotifications />} />
+            <Route path="relatorios" element={<AdminReports />} />
           </Route>
           
           {/* Catch-all */}
