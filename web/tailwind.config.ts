@@ -111,5 +111,8 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    // @ts-expect-error - dynamic import for ESM compatibility
+    import("tailwindcss-animate").then((mod) => mod.default || mod),
+  ],
 } satisfies Config;
