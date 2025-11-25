@@ -16,10 +16,17 @@ import {
   Star,
   Activity
 } from 'lucide-react';
+import { subscriptionsService } from '@/services/subscriptions.service';
+import { dashboardService } from '@/services/dashboard.service';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [activeSubscriptionsCount, setActiveSubscriptionsCount] = useState<number | null>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number | null>(null);
+  const [overduePaymentsCount, setOverduePaymentsCount] = useState<number | null>(null);
+  const [overduePaymentsList, setOverduePaymentsList] = useState<any[]>([]);
 
   // Simula carregamento de dados
   useEffect(() => {
@@ -28,17 +35,57 @@ const AdminDashboard = () => {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
-  
-  // Mock KPIs data
+
+  // Carregar número de assinaturas ativas (admin)
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const res = await subscriptionsService.list({ status: 'ativa', page: 1 });
+        if (!mounted) return;
+        setActiveSubscriptionsCount(res.meta?.total ?? 0);
+      } catch (err) {
+        console.error('Erro ao carregar assinaturas ativas', err);
+        if (mounted) setActiveSubscriptionsCount(0);
+      }
+    };
+
+    load();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // Carregar métricas do dashboard (receita mensal)
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const data = await dashboardService.getAdminDashboard();
+        if (!mounted) return;
+        setMonthlyRevenue(data.financeiro?.receita_mes ?? 0);
+        setOverduePaymentsCount(data.financeiro?.pagamentos_atrasados ?? 0);
+        setOverduePaymentsList(data.financeiro?.pagamentos_atrasados_list || []);
+      } catch (err) {
+        console.error('Erro ao carregar métricas do dashboard', err);
+        if (mounted) setMonthlyRevenue(0);
+      }
+    };
+
+    load();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // KPIs combinando estado dinâmico e mocks de fallback
   const kpis = {
-    activeSubscriptions: 127,
-    overduePayments: 8,
+    activeSubscriptions: activeSubscriptionsCount ?? 127,
+    overduePayments: overduePaymentsCount ?? 8,
     courtOccupancy: 78, // percentage
-    monthlyRevenue: 45680,
+    monthlyRevenue: monthlyRevenue ?? 45680,
     newMembersThisMonth: 23,
     totalBookingsToday: 15,
     classesWithAvailability: 12,
-    trainerSessions: 34
+    trainerSessions: 34,
   };
 
   const recentBookings = [
@@ -71,24 +118,7 @@ const AdminDashboard = () => {
     }
   ];
 
-  const overduePayments = [
-    {
-      id: '1',
-      client: 'Carlos Lima',
-      type: 'Assinatura',
-      amount: 129,
-      daysOverdue: 5,
-      plan: 'Fit Plus'
-    },
-    {
-      id: '2',
-      client: 'Ana Costa',
-      type: 'Reserva',
-      amount: 45,
-      daysOverdue: 2,
-      plan: null
-    }
-  ];
+  // overduePaymentsList is fetched from the admin dashboard API
 
   const topClasses = [
     {
@@ -168,17 +198,6 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-dashboard-card border-dashboard-border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-dashboard-fg">Ocupação Quadras</CardTitle>
-                <Activity className="h-4 w-4 text-fitway-green" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{kpis.courtOccupancy}%</div>
-                <p className="text-xs text-white/70">{kpis.totalBookingsToday} reservas hoje</p>
-              </CardContent>
-            </Card>
-
             <Card className="bg-dashboard-card border-dashboard-border border-orange-500/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-dashboard-fg">Pagamentos Atrasados</CardTitle>
@@ -241,18 +260,26 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {overduePayments.map((payment) => (
-                <div key={payment.id} className="p-3 bg-dashboard-bg/50 rounded-lg border border-orange-500/20">
-                  <p className="font-medium text-white">{payment.client}</p>
-                  <p className="text-sm text-white/80">{payment.type} {payment.plan && `- ${payment.plan}`}</p>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-orange-500 font-bold">R$ {payment.amount}</span>
-                    <Badge variant="outline" className="border-orange-500 text-orange-500">
-                      {payment.daysOverdue} dias
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+              {overduePaymentsList.length === 0 ? (
+                <div className="p-3 text-sm text-white/70">Nenhum pagamento atrasado encontrado</div>
+              ) : (
+                overduePaymentsList.map((p) => {
+                  const venc = p.vencimento ? new Date(p.vencimento) : null;
+                  const daysOverdue = venc ? Math.max(1, Math.ceil((Date.now() - venc.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+                  return (
+                    <div key={p.id_cobranca} className="p-3 bg-dashboard-bg/50 rounded-lg border border-orange-500/20">
+                      <p className="font-medium text-white">{p.usuario_nome}</p>
+                      <p className="text-sm text-white/80">{p.descricao}</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-orange-500 font-bold">{formatCurrency(p.valor_total)}</span>
+                        <Badge variant="outline" className="border-orange-500 text-orange-500">
+                          {daysOverdue} dias
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
               <Button variant="outline" className="w-full border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white" onClick={() => navigate('/admin/pagamentos')}>
                 Gerenciar Cobranças
               </Button>

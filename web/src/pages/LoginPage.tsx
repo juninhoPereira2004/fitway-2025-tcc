@@ -31,7 +31,6 @@ const LoginPage = () => {
         description: `Bem-vindo de volta, ${response.user.name}!`,
       });
 
-      // Redirect based on user role
       switch (response.user.role) {
         case 'aluno':
           navigate('/aluno/dashboard');

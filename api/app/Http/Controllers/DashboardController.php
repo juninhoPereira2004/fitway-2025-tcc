@@ -77,6 +77,29 @@ class DashboardController extends Controller
             ->where('status', 'ativa')
             ->count();
 
+        // Pagamentos atrasados: cobranças pendentes com vencimento antes de hoje
+        $pagamentosAtrasados = DB::table('cobrancas')
+            ->where('status', 'pendente')
+            ->whereDate('vencimento', '<', $now->toDateString())
+            ->count();
+
+        // Lista resumida de pagamentos atrasados (para exibir no dashboard)
+        $pagamentosAtrasadosList = DB::table('cobrancas as c')
+            ->join('usuarios as u', 'c.id_usuario', '=', 'u.id_usuario')
+            ->select(
+                'c.id_cobranca',
+                'c.descricao',
+                'c.valor_total',
+                'c.vencimento',
+                'u.nome as usuario_nome',
+                'c.referencia_tipo'
+            )
+            ->where('c.status', 'pendente')
+            ->whereDate('c.vencimento', '<', $now->toDateString())
+            ->orderBy('c.vencimento', 'asc')
+            ->limit(5)
+            ->get();
+
         // Quadras disponíveis
         $quadrasAtivas = DB::table('quadras')
             ->where('status', 'ativa')
@@ -124,11 +147,13 @@ class DashboardController extends Controller
                 'financeiro' => [
                     'receita_mes' => (float) $receitaMes,
                     'assinaturas_ativas' => $assinaturasAtivas,
+                    'pagamentos_atrasados' => $pagamentosAtrasados,
                 ],
                 'quadras' => [
                     'ativas' => $quadrasAtivas,
                 ],
                 'proximas_reservas' => $proximasReservas,
+                'pagamentos_atrasados_list' => $pagamentosAtrasadosList,
             ]
         ], 200);
     }

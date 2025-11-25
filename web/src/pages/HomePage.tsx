@@ -122,7 +122,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-fitway-dark/95 backdrop-blur-sm border-b border-fitway-green/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -142,7 +141,6 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -562,7 +560,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-fitway-dark text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">

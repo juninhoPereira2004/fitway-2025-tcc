@@ -22,6 +22,15 @@ export interface AdminDashboardData {
   financeiro: {
     receita_mes: number;
     assinaturas_ativas: number;
+    pagamentos_atrasados?: number;
+    pagamentos_atrasados_list?: Array<{
+      id_cobranca: number;
+      descricao: string;
+      valor_total: number | string;
+      vencimento: string;
+      usuario_nome: string;
+      referencia_tipo: string;
+    }>;
   };
   quadras: {
     ativas: number;
