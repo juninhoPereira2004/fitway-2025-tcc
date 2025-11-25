@@ -393,21 +393,6 @@ Acesse "Pagamentos" para concluir o pagamento.`,
                       </div>
                     </div>
 
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white/70 text-sm">Vagas:</span>
-                        <span className="text-white text-sm">{occ.numero_inscritos || 0}/{occ.aula?.capacidade_max}</span>
-                      </div>
-                      <div className="w-full bg-dashboard-bg rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            (occ.numero_inscritos || 0) === (occ.aula?.capacidade_max || 0) ? 'bg-red-500' : 'bg-fitway-green'
-                          }`}
-                          style={{ width: `${(((occ.numero_inscritos || 0) / (occ.aula?.capacidade_max || 1)) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-white/70">Data:</span>
