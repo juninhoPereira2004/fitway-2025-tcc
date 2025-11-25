@@ -18,20 +18,20 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = User::query();
-        
+
         // SOFT DELETE: Não listar usuários excluídos
         $query->where('status', '!=', 'excluido');
-        
+
         // Filtro por papel
         if ($request->has('papel') && $request->papel !== '') {
             $query->where('papel', $request->papel);
         }
-        
+
         // Filtro por status
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
-        
+
         // Busca por nome ou email
         if ($request->has('search') && $request->search !== '') {
             $search = $request->search;
@@ -40,10 +40,10 @@ class UserController extends Controller
                   ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
-        
+
         // Ordenar
         $usuarios = $query->orderBy('nome')->get();
-        
+
         // Mapear para formato frontend
         $data = $usuarios->map(function ($usuario) {
             return [
@@ -59,7 +59,7 @@ class UserController extends Controller
                 'atualizado_em' => $usuario->atualizado_em->toISOString(),
             ];
         });
-        
+
         return response()->json([
             'data' => $data,
             'total' => $data->count(),
@@ -72,7 +72,7 @@ class UserController extends Controller
     public function show(string $id): JsonResponse
     {
         $usuario = User::findOrFail($id);
-        
+
         return response()->json([
             'data' => [
                 'id_usuario' => (string) $usuario->id_usuario,
@@ -104,7 +104,7 @@ class UserController extends Controller
             'papel' => $request->papel,
             'status' => $request->status ?? 'ativo',
         ]);
-        
+
         return response()->json([
             'data' => [
                 'id_usuario' => (string) $usuario->id_usuario,
@@ -128,42 +128,42 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
         $usuario = User::findOrFail($id);
-        
+
         // Atualizar apenas campos fornecidos
         if ($request->has('nome')) {
             $usuario->nome = $request->nome;
         }
-        
+
         if ($request->has('email')) {
             $usuario->email = $request->email;
         }
-        
+
         if ($request->has('senha')) {
             $usuario->senha_hash = Hash::make($request->senha);
         }
-        
+
         if ($request->has('telefone')) {
             $usuario->telefone = $request->telefone;
         }
-        
+
         if ($request->has('documento')) {
             $usuario->documento = $request->documento;
         }
-        
+
         if ($request->has('data_nascimento')) {
             $usuario->data_nascimento = $request->data_nascimento;
         }
-        
+
         if ($request->has('papel')) {
             $usuario->papel = $request->papel;
         }
-        
+
         if ($request->has('status')) {
             $usuario->status = $request->status;
         }
-        
+
         $usuario->save();
-        
+
         return response()->json([
             'data' => [
                 'id_usuario' => (string) $usuario->id_usuario,
@@ -187,10 +187,17 @@ class UserController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $usuario = User::findOrFail($id);
-        
+        // Evitar que um admin se exclua acidentalmente
+        $currentUserId = auth()->id();
+        if ($currentUserId !== null && $currentUserId == $usuario->id_usuario) {
+            return response()->json([
+                'message' => 'Você não pode excluir seu próprio usuário'
+            ], 403);
+        }
+
         // SOFT DELETE: Marcar como excluído em vez de deletar fisicamente
         $usuario->update(['status' => 'excluido']);
-        
+
         return response()->json(null, 204);
     }
 
@@ -200,11 +207,11 @@ class UserController extends Controller
     public function updateStatus(string $id): JsonResponse
     {
         $usuario = User::findOrFail($id);
-        
+
         // Alternar status automaticamente
         $usuario->status = $usuario->status === 'ativo' ? 'inativo' : 'ativo';
         $usuario->save();
-        
+
         return response()->json([
             'data' => [
                 'id_usuario' => (string) $usuario->id_usuario,
