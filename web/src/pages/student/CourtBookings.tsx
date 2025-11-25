@@ -331,10 +331,10 @@ export default function StudentCourtBookingsPage() {
         </Select>
       </div>
 
-      {/* PrÃ³ximas Reservas */}
+      {/* Proximas Reservas */}
       {futureBookings.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">PrÃ³ximas Reservas</h2>
+          <h2 className="text-xl font-semibold mb-4">Próximas Reservas</h2>
           <div className="grid gap-4">
             {futureBookings.map((booking) => (
               <Card key={booking.id_reserva_quadra} className="hover:shadow-md transition-shadow">
@@ -389,7 +389,7 @@ export default function StudentCourtBookingsPage() {
       {/* HistÃ³rico */}
       {pastBookings.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">HistÃ³rico</h2>
+          <h2 className="text-xl font-semibold mb-4">Histórico</h2>
           <div className="grid gap-4">
             {pastBookings.map((booking) => (
               <Card key={booking.id_reserva_quadra} className="opacity-75">
@@ -491,7 +491,7 @@ export default function StudentCourtBookingsPage() {
             {/* HorÃ¡rios */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="horaInicio">Hora InÃ­cio *</Label>
+                <Label htmlFor="horaInicio">Hora Inicio *</Label>
                 <Input
                   id="horaInicio"
                   type="time"
