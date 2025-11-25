@@ -18,6 +18,7 @@ const RegisterPage = () => {
     password_confirmation: '',
     phone: ''
   });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +31,7 @@ const RegisterPage = () => {
     setError('');
 
     if (formData.password !== formData.password_confirmation) {
-      setError('As senhas não coincidem');
+      setError('As senhas não coincidem.');
       setIsLoading(false);
       return;
     }
@@ -43,16 +44,30 @@ const RegisterPage = () => {
 
     try {
       const response = await authService.register(payload);
-      
+
       toast({
         title: 'Conta criada com sucesso!',
         description: `Bem-vindo à FITWAY, ${response.user.name}!`,
       });
 
-      // New users are typically students
       navigate('/aluno/dashboard');
+
     } catch (error: any) {
-      setError(getErrorMessage(error));
+      
+      // 🔥 Lógica personalizada de erros
+      if (!error.response) {
+        setError("Este e-mail já está em uso ou vinculado a uma conta inativada.");
+      } 
+      else if (error.response.status === 422) {
+        setError("Este e-mail já está em uso ou vinculado a uma conta inativada.");
+      } 
+      else if (error.response.status === 400 || error.response.status === 409) {
+        setError(error.response.data?.message || "Não foi possível criar sua conta.");
+      } 
+      else {
+        setError("Ocorreu um erro inesperado. Tente novamente.");
+      }
+
     } finally {
       setIsLoading(false);
     }
@@ -103,17 +118,17 @@ const RegisterPage = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-white">Nome completo</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Seu nome completo"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                maxLength={80}
-                className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"
-              />
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  maxLength={80}
+                  className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"
+                />
               </div>
 
               <div className="space-y-2">
